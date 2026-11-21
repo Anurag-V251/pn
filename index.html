@@ -62,7 +62,7 @@
 <main>
   <header>
     <h1>Paper Notes</h1>
-    <p>Draw something or add a photo, then send it. It appears on the e-paper frame within a minute.</p>
+    <p>Draw something or add a photo, then send it. It appears on the e-paper frame within a minute. Pictures are encrypted on this phone; only the frame can open them.</p>
   </header>
 
   <div class="notice" id="missing" hidden>This link is missing its secret code, so nothing can be sent. Ask for the full link again.</div>
@@ -120,13 +120,35 @@ const LOOKS = {
   smooth: { levels: [0, 255], codes: [0, 3], dither: 'floyd' },
   gray:   { levels: [0, 85, 170, 255], codes: [0, 1, 2, 3], dither: 'floyd' },
 };
-const topic = decodeURIComponent(location.hash.slice(1)).trim();
+// The link carries "<topic>.<key>": the relay mailbox and the AES-256 key. Neither is ever sent to this site.
+const [topic = '', keyText = ''] = decodeURIComponent(location.hash.slice(1)).trim().split('.');
+let aesKey = null;
 const $ = id => document.getElementById(id);
 const canvas = $('board'), ctx = canvas.getContext('2d', { willReadFrequently: true });
 const opts = { color: '#000', size: '9', orient: 'portrait', look: 'crisp' };
 let photo = null, strokes = [], current = null, previewing = false, clearArmed = null;
 
-if (!/^[\w-]{8,64}$/.test(topic)) { $('missing').hidden = false; $('send').disabled = true; }
+function keyBytes(t) {
+  if (!/^[\w-]{43}$/.test(t)) return null;
+  const bin = atob(t.replace(/-/g, '+').replace(/_/g, '/') + '=');
+  return Uint8Array.from(bin, c => c.charCodeAt(0));
+}
+const rawKey = keyBytes(keyText);
+if (!/^[\w-]{8,64}$/.test(topic) || !rawKey || !crypto.subtle) {
+  $('missing').hidden = false; $('send').disabled = true;
+} else {
+  crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['encrypt']).then(k => { aesKey = k; });
+}
+
+// AES-256-GCM: "PNE1" | 12-byte random IV | ciphertext | 16-byte tag. The topic is authenticated too.
+async function seal(frame) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const aad = new TextEncoder().encode('paper-notes/v1|' + topic);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: aad, tagLength: 128 }, aesKey, frame));
+  const out = new Uint8Array(4 + iv.length + ct.length);
+  out.set(new TextEncoder().encode('PNE1')); out.set(iv, 4); out.set(ct, 16);
+  return out;
+}
 
 function dims() { return opts.orient === 'portrait' ? [NATIVE_H, NATIVE_W] : [NATIVE_W, NATIVE_H]; }
 
@@ -327,17 +349,18 @@ function status(t) { $('status').textContent = t; }
 
 $('send').addEventListener('click', async () => {
   if (!strokes.length && !photo) { status('Draw something or add a photo first.'); return; }
+  if (!aesKey) { status('This link is missing its secret code, so nothing can be sent.'); return; }
   $('send').disabled = true; status('Sending...');
   try {
     const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), {
-      method: 'PUT', headers: { 'Filename': 'note.g4', 'Content-Type': 'application/octet-stream' }, body: pack(render()),
+      method: 'PUT', headers: { 'Filename': 'note.bin', 'Content-Type': 'application/octet-stream' }, body: await seal(pack(render())),
     });
     if (!r.ok) throw new Error('the relay answered ' + r.status);
     status('Sent. It appears on the frame within a minute, if it is switched on.');
   } catch (e) {
     status('Could not send (' + e.message + '). Check the internet connection and try again.');
   }
-  $('send').disabled = !topic;
+  $('send').disabled = !aesKey;
 });
 
 redraw();
