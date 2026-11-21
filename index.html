@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Paper Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;600&display=swap">
+<style>
+  /* Layout: one narrow column, the drawing sheet first, tools in thumb reach below it */
+  :root {
+    --paper: #eceee9; --sheet: #fbfbf8; --ink: #17191c; --muted: #5f6670; --line: #cdd1ca;
+    --accent: #b8335f; --accent-ink: #ffffff;
+    --hand: "Caveat", "Segoe Print", cursive;
+    --body: "Figtree", system-ui, -apple-system, sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #15171a; --sheet: #fbfbf8; --ink: #e9ebe7; --muted: #9aa1a9; --line: #33373c;
+            --accent: #e0668f; --accent-ink: #15171a; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--paper); color: var(--ink); font: 16px/1.45 var(--body); }
+  main { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px;
+         padding-block: max(18px, env(safe-area-inset-top, 0px)) max(32px, env(safe-area-inset-bottom, 0px));
+         padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font: 600 44px/1 var(--hand); margin: 0; letter-spacing: .5px; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+  .notice { border: 1px solid var(--accent); color: var(--ink); padding: 12px 14px; border-radius: 10px; }
+  .stage { position: relative; display: flex; justify-content: center; }
+  canvas { display: block; max-width: 100%; max-height: 62vh; background: var(--sheet); border-radius: 4px;
+           box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.10); touch-action: none; }
+  canvas.preview { image-rendering: pixelated; }
+  .badge { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 12px; letter-spacing: .06em;
+           text-transform: uppercase; background: var(--ink); color: var(--paper); padding: 3px 8px; border-radius: 99px; }
+  .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 15px; padding: 9px 12px; min-width: 44px; }
+  .seg button.on { background: var(--ink); color: var(--paper); }
+  .btn { border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 15px;
+         padding: 9px 12px; border-radius: 10px; cursor: pointer; }
+  .btn.warn { border-color: var(--accent); color: var(--accent); }
+  .spacer { flex: 1; }
+  input[type=file] { display: none; }
+  details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  summary { cursor: pointer; font-weight: 600; }
+  .row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .row > span { width: 88px; color: var(--muted); font-size: 14px; }
+  .row input[type=range] { flex: 1; min-width: 0; }
+  .send { display: flex; gap: 8px; }
+  .send .btn { flex: 1; }
+  #send { flex: 2; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 14px; }
+  #send:disabled { opacity: .45; }
+  #status { margin: 0; min-height: 1.4em; text-align: center; color: var(--muted); font-size: 15px; }
+  button:focus-visible, .btn:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Paper Notes</h1>
+    <p>Draw something or add a photo, then send it. It appears on the e-paper frame within a minute.</p>
+  </header>
+
+  <div class="notice" id="missing" hidden>This link is missing its secret code, so nothing can be sent. Ask for the full link again.</div>
+
+  <div class="stage">
+    <canvas id="board" aria-label="Drawing sheet"></canvas>
+    <span class="badge" id="badge" hidden>E-paper preview</span>
+  </div>
+
+  <div class="tools">
+    <div class="seg" data-name="color" role="group" aria-label="Pen colour">
+      <button data-v="#000" class="on">Black</button><button data-v="#fff">White</button>
+    </div>
+    <div class="seg" data-name="size" role="group" aria-label="Pen size">
+      <button data-v="4">S</button><button data-v="9" class="on">M</button><button data-v="18">L</button>
+    </div>
+    <span class="spacer"></span>
+    <button class="btn" id="undo">Undo</button>
+    <button class="btn" id="clear">Clear</button>
+  </div>
+
+  <div class="tools">
+    <label class="btn" for="photo" id="photoLabel">Add photo</label>
+    <input type="file" id="photo" accept="image/*">
+    <button class="btn" id="removePhoto" hidden>Remove photo</button>
+    <span class="spacer"></span>
+    <div class="seg" data-name="orient" role="group" aria-label="Orientation">
+      <button data-v="portrait" class="on">Tall</button><button data-v="landscape">Wide</button>
+    </div>
+  </div>
+
+  <details id="photoOpts" hidden>
+    <summary>Photo look</summary>
+    <div class="row"><span>Style</span>
+      <div class="seg" data-name="look" role="group" aria-label="Photo style">
+        <button data-v="crisp" class="on">Crisp</button><button data-v="smooth">Smooth</button><button data-v="gray">Gray</button>
+      </div>
+    </div>
+    <div class="row"><span>Brightness</span><input type="range" id="bright" min="-80" max="80" value="0"></div>
+    <div class="row"><span>Contrast</span><input type="range" id="contrast" min="-80" max="80" value="5"></div>
+  </details>
+
+  <div class="send">
+    <button class="btn" id="previewBtn">Preview</button>
+    <button id="send">Send to frame</button>
+  </div>
+  <p id="status" role="status"></p>
+</main>
+
+<script>
+// The frame: 800x480 e-paper, 4 gray levels packed 4 pixels per byte (0 black .. 3 white).
+const NATIVE_W = 800, NATIVE_H = 480, SHADES = [0, 85, 170, 255];
+const LOOKS = {
+  crisp:  { levels: [0, 255], codes: [0, 3], dither: 'atkinson' },
+  smooth: { levels: [0, 255], codes: [0, 3], dither: 'floyd' },
+  gray:   { levels: [0, 85, 170, 255], codes: [0, 1, 2, 3], dither: 'floyd' },
+};
+const topic = decodeURIComponent(location.hash.slice(1)).trim();
+const $ = id => document.getElementById(id);
+const canvas = $('board'), ctx = canvas.getContext('2d', { willReadFrequently: true });
+const opts = { color: '#000', size: '9', orient: 'portrait', look: 'crisp' };
+let photo = null, strokes = [], current = null, previewing = false, clearArmed = null;
+
+if (!/^[\w-]{8,64}$/.test(topic)) { $('missing').hidden = false; $('send').disabled = true; }
+
+function dims() { return opts.orient === 'portrait' ? [NATIVE_H, NATIVE_W] : [NATIVE_W, NATIVE_H]; }
+
+// ---------------------------------------------------------------- drawing
+function drawStroke(c, s) {
+  c.strokeStyle = s.color; c.fillStyle = s.color; c.lineWidth = s.size; c.lineCap = 'round'; c.lineJoin = 'round';
+  const p = s.points;
+  if (p.length === 1) { c.beginPath(); c.arc(p[0][0], p[0][1], s.size / 2, 0, Math.PI * 2); c.fill(); return; }
+  c.beginPath(); c.moveTo(p[0][0], p[0][1]);
+  for (let i = 1; i < p.length - 1; i++) {
+    const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2;
+    c.quadraticCurveTo(p[i][0], p[i][1], mx, my);
+  }
+  c.lineTo(p[p.length - 1][0], p[p.length - 1][1]); c.stroke();
+}
+
+function drawPhoto(c, W, H) {
+  if (!photo) return;
+  const iw = photo.naturalWidth, ih = photo.naturalHeight, s = Math.max(W / iw, H / ih);
+  c.drawImage(photo, (W - iw * s) / 2, (H - ih * s) / 2, iw * s, ih * s);
+}
+
+function redraw() {
+  const [W, H] = dims();
+  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  if (previewing) { showPreview(); return; }
+  canvas.classList.remove('preview');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  drawPhoto(ctx, W, H);
+  strokes.forEach(s => drawStroke(ctx, s));
+  if (current) drawStroke(ctx, current);
+}
+
+function pos(e) {
+  const r = canvas.getBoundingClientRect();
+  return [(e.clientX - r.left) * canvas.width / r.width, (e.clientY - r.top) * canvas.height / r.height];
+}
+canvas.addEventListener('pointerdown', e => {
+  if (previewing) setPreview(false);
+  canvas.setPointerCapture(e.pointerId);
+  current = { color: opts.color, size: +opts.size * (canvas.width / 480), points: [pos(e)] };
+  redraw();
+});
+canvas.addEventListener('pointermove', e => {
+  if (!current) return;
+  current.points.push(pos(e)); redraw();
+});
+const endStroke = () => { if (current) { strokes.push(current); current = null; redraw(); } };
+canvas.addEventListener('pointerup', endStroke);
+canvas.addEventListener('pointercancel', endStroke);
+
+$('undo').addEventListener('click', () => { strokes.pop(); setPreview(false); });
+$('clear').addEventListener('click', () => {
+  // Two taps: the first arms it, so a stray tap never wipes a drawing
+  if (!clearArmed) {
+    $('clear').textContent = 'Tap to confirm'; $('clear').classList.add('warn');
+    clearArmed = setTimeout(disarmClear, 3000);
+    return;
+  }
+  disarmClear(); strokes = []; photo = null; syncPhotoUi(); setPreview(false);
+});
+function disarmClear() { clearTimeout(clearArmed); clearArmed = null; $('clear').textContent = 'Clear'; $('clear').classList.remove('warn'); }
+
+document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  const name = seg.dataset.name, [oldW, oldH] = dims();
+  opts[name] = b.dataset.v;
+  if (name === 'orient') {
+    // Keep the drawing roughly in place on the new sheet shape
+    const [W, H] = dims();
+    strokes.forEach(s => s.points = s.points.map(([x, y]) => [x * W / oldW, y * H / oldH]));
+  }
+  if (name === 'look' || name === 'orient') redraw();
+}));
+['bright', 'contrast'].forEach(id => $(id).addEventListener('input', () => previewing && redraw()));
+
+$('photo').addEventListener('change', () => {
+  const f = $('photo').files[0]; if (!f) return;
+  const im = new Image();
+  im.onload = () => {
+    photo = im;
+    if (!strokes.length) {
+      // Match the sheet to the photo's shape when nothing has been drawn yet
+      const want = im.naturalWidth > im.naturalHeight ? 'landscape' : 'portrait';
+      document.querySelector(`.seg[data-name=orient] button[data-v=${want}]`).click();
+    }
+    syncPhotoUi(); redraw();
+  };
+  im.onerror = () => status('That file could not be opened as a picture.');
+  im.src = URL.createObjectURL(f);
+  $('photo').value = '';
+});
+$('removePhoto').addEventListener('click', () => { photo = null; syncPhotoUi(); redraw(); });
+function syncPhotoUi() {
+  $('removePhoto').hidden = !photo; $('photoOpts').hidden = !photo;
+  $('photoLabel').textContent = photo ? 'Change photo' : 'Add photo';
+}
+
+// ---------------------------------------------------------------- e-paper conversion
+function adjust(g, W, H) {
+  const n = W * H, hist = new Uint32Array(256);
+  for (let i = 0; i < n; i++) hist[Math.min(255, Math.max(0, g[i] | 0))]++;
+  const cut = n * 0.005;
+  let lo = 0, hi = 255, acc = 0;
+  while (lo < 255 && (acc += hist[lo]) <= cut) lo++;
+  acc = 0;
+  while (hi > 0 && (acc += hist[hi]) <= cut) hi--;
+  const k = hi - lo > 10 ? 255 / (hi - lo) : 1, base = hi - lo > 10 ? lo : 0;
+  const br = +$('bright').value, c = +$('contrast').value, cf = (259 * (c + 255)) / (255 * (259 - c));
+  const gm = Math.pow(2, -10 / 60);
+  for (let i = 0; i < n; i++) {
+    const v = Math.min(1, Math.max(0, (cf * ((g[i] - base) * k - 128) + 128 + br) / 255));
+    g[i] = 255 * Math.pow(v, gm);
+  }
+  // Light unsharp mask: e-paper softens edges
+  const t = new Float32Array(n), b = new Float32Array(n);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x;
+    t[i] = (g[x > 0 ? i - 1 : i] + 2 * g[i] + g[x < W - 1 ? i + 1 : i]) / 4;
+  }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x;
+    b[i] = (t[y > 0 ? i - W : i] + 2 * t[i] + t[y < H - 1 ? i + W : i]) / 4;
+  }
+  for (let i = 0; i < n; i++) g[i] += 0.7 * (g[i] - b[i]);
+}
+
+function quantize(g, W, H, look) {
+  const { levels, codes, dither } = look, L = levels.length - 1, step = 255 / L;
+  const q = new Uint8Array(W * H);
+  const add = (x, y, v) => { if (x >= 0 && x < W && y < H) g[y * W + x] += v; };
+  for (let y = 0; y < H; y++) {
+    const rev = dither === 'floyd' && (y & 1), dir = rev ? -1 : 1;
+    for (let k = 0; k < W; k++) {
+      const x = rev ? W - 1 - k : k, i = y * W + x;
+      const v = Math.min(255, Math.max(0, g[i])), lv = Math.min(L, Math.max(0, Math.round(v / step)));
+      q[i] = codes[lv];
+      const e = v - levels[lv];
+      if (dither === 'atkinson') {
+        const a = e / 8;
+        add(x + 1, y, a); add(x + 2, y, a); add(x - 1, y + 1, a); add(x, y + 1, a); add(x + 1, y + 1, a); add(x, y + 2, a);
+      } else {
+        add(x + dir, y, e * 7 / 16); add(x - dir, y + 1, e * 3 / 16); add(x, y + 1, e * 5 / 16); add(x + dir, y + 1, e / 16);
+      }
+    }
+  }
+  return q;
+}
+
+// Returns device codes per pixel for the sheet: the photo is toned and dithered, ink stays solid
+function render() {
+  const [W, H] = dims(), n = W * H;
+  const work = document.createElement('canvas'); work.width = W; work.height = H;
+  const wc = work.getContext('2d', { willReadFrequently: true });
+  wc.fillStyle = '#fff'; wc.fillRect(0, 0, W, H);
+  drawPhoto(wc, W, H);
+  const pd = wc.getImageData(0, 0, W, H).data, g = new Float32Array(n);
+  for (let i = 0; i < n; i++) g[i] = 0.299 * pd[i * 4] + 0.587 * pd[i * 4 + 1] + 0.114 * pd[i * 4 + 2];
+  if (photo) adjust(g, W, H);
+
+  wc.clearRect(0, 0, W, H);
+  strokes.forEach(s => drawStroke(wc, s));
+  const sd = wc.getImageData(0, 0, W, H).data;
+  for (let i = 0; i < n; i++) {
+    const a = sd[i * 4 + 3] / 255;
+    if (a > 0) g[i] = g[i] * (1 - a) + sd[i * 4] * a;
+  }
+  return quantize(g, W, H, LOOKS[photo ? opts.look : 'crisp']);
+}
+
+function showPreview() {
+  const [W, H] = dims(), q = render(), img = ctx.createImageData(W, H), d = img.data;
+  for (let i = 0; i < W * H; i++) { const v = SHADES[q[i]]; d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v; d[i * 4 + 3] = 255; }
+  ctx.putImageData(img, 0, 0);
+  canvas.classList.add('preview');
+}
+
+function setPreview(on) {
+  previewing = on;
+  $('badge').hidden = !on;
+  $('previewBtn').textContent = on ? 'Back to drawing' : 'Preview';
+  redraw();
+}
+$('previewBtn').addEventListener('click', () => setPreview(!previewing));
+
+function pack(q) {
+  const [W, H] = dims(), land = opts.orient === 'landscape', out = new Uint8Array(NATIVE_W * NATIVE_H / 4);
+  // Tall sheets use the frame's 270-degree rotation, like its menus
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const X = land ? x : y, Y = land ? y : NATIVE_H - 1 - x;
+    out[Y * (NATIVE_W / 4) + (X >> 2)] |= q[y * W + x] << (6 - 2 * (X & 3));
+  }
+  return out;
+}
+
+function status(t) { $('status').textContent = t; }
+
+$('send').addEventListener('click', async () => {
+  if (!strokes.length && !photo) { status('Draw something or add a photo first.'); return; }
+  $('send').disabled = true; status('Sending...');
+  try {
+    const r = await fetch('https://ntfy.sh/' + encodeURIComponent(topic), {
+      method: 'PUT', headers: { 'Filename': 'note.g4', 'Content-Type': 'application/octet-stream' }, body: pack(render()),
+    });
+    if (!r.ok) throw new Error('the relay answered ' + r.status);
+    status('Sent. It appears on the frame within a minute, if it is switched on.');
+  } catch (e) {
+    status('Could not send (' + e.message + '). Check the internet connection and try again.');
+  }
+  $('send').disabled = !topic;
+});
+
+redraw();
+</script>
+</body>
+</html>
