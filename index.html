@@ -22,10 +22,11 @@
             --accent: #e0668f; --accent-ink: #15171a; --panel: #1d2024; color-scheme: dark; }
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html, body { margin: 0; }
   body { background: var(--paper); color: var(--ink); font: 16px/1.45 var(--body); }
   main { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;
-         padding-block: max(18px, env(safe-area-inset-top, 0px)) max(32px, env(safe-area-inset-bottom, 0px));
+         padding-block: max(18px, env(safe-area-inset-top, 0px)) 0;
          padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   h1 { font: 600 44px/1 var(--hand); margin: 0; letter-spacing: .5px; }
   header p { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
@@ -61,6 +62,11 @@
   .row > span { width: 88px; color: var(--muted); font-size: 14px; }
   .row input[type=range] { flex: 1; min-width: 0; }
   .hint { margin: 0; color: var(--muted); font-size: 13px; }
+  /* Preview and Send stay at the bottom of the screen while scrolling */
+  .actions { position: sticky; bottom: 0; z-index: 5; margin: 0 -16px; display: flex; flex-direction: column; gap: 6px;
+             background: var(--paper); border-top: 1px solid var(--line);
+             padding-block: 10px max(10px, env(safe-area-inset-bottom, 0px));
+             padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   .send { display: flex; gap: 8px; }
   .send .btn { flex: 1; }
   #send { flex: 2; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 14px; }
@@ -83,6 +89,36 @@
     <span class="badge" id="badge" hidden>E-paper preview</span>
   </div>
 
+  <section class="panel" id="selPanel" hidden>
+    <div class="row"><span>Sticker size</span>
+      <input type="range" id="selSize" min="20" max="400" value="100" aria-label="Sticker size">
+      <button class="btn warn" id="selDelete">Delete</button>
+    </div>
+    <p class="hint">Drag it on the sheet to move it.</p>
+  </section>
+
+  <section class="panel" id="textPanel" hidden>
+    <textarea id="textInput" placeholder="Type a message. Emoji from your keyboard work too." maxlength="200" aria-label="Text"></textarea>
+    <div class="emojis" id="emojiRow" aria-label="Quick emoji"></div>
+    <div class="row"><span>Style</span>
+      <div class="seg" data-name="font" role="group" aria-label="Text style">
+        <button data-v="hand" class="on">Hand</button><button data-v="bold">Bold</button><button data-v="classic">Classic</button>
+      </div>
+    </div>
+    <div class="row"><span>Colour</span>
+      <div class="seg" data-name="tcolor" role="group" aria-label="Text colour">
+        <button data-v="#000" class="on">Black</button><button data-v="#fff">White</button>
+      </div>
+    </div>
+    <div class="row"><span>Size</span><input type="range" id="textSize" min="20" max="200" value="90" aria-label="Text size"></div>
+    <div class="tools">
+      <span class="hint">Drag the text on the sheet to move it.</span><span class="spacer"></span>
+      <button class="btn warn" id="textDelete">Delete</button>
+      <button class="btn on" id="textOk">Done</button>
+    </div>
+  </section>
+
+
   <div class="tools">
     <div class="seg" data-name="tool" role="group" aria-label="Tool">
       <button data-v="draw" class="on">Draw</button><button data-v="move">Move</button>
@@ -104,35 +140,6 @@
     <button class="btn" id="undo">Undo</button>
     <button class="btn" id="clear">Clear</button>
   </div>
-
-  <section class="panel" id="selPanel" hidden>
-    <div class="row"><span>Selected</span>
-      <input type="range" id="selSize" min="20" max="400" value="100" aria-label="Size">
-      <button class="btn" id="selEdit" hidden>Edit text</button>
-      <button class="btn warn" id="selDelete">Delete</button>
-    </div>
-    <p class="hint">Drag it on the sheet to move it. The slider changes its size.</p>
-  </section>
-
-  <section class="panel" id="textPanel" hidden>
-    <h2 id="textTitle">Add text</h2>
-    <textarea id="textInput" placeholder="Type a message. Emoji from your keyboard work too." maxlength="200"></textarea>
-    <div class="emojis" id="emojiRow" aria-label="Quick emoji"></div>
-    <div class="row"><span>Style</span>
-      <div class="seg" data-name="font" role="group" aria-label="Text style">
-        <button data-v="hand" class="on">Hand</button><button data-v="bold">Bold</button><button data-v="classic">Classic</button>
-      </div>
-    </div>
-    <div class="row"><span>Colour</span>
-      <div class="seg" data-name="tcolor" role="group" aria-label="Text colour">
-        <button data-v="#000" class="on">Black</button><button data-v="#fff">White</button>
-      </div>
-    </div>
-    <div class="tools"><span class="spacer"></span>
-      <button class="btn" id="textCancel">Cancel</button>
-      <button class="btn on" id="textOk">Add to sheet</button>
-    </div>
-  </section>
 
   <section class="panel" id="stickerPanel" hidden>
     <h2>Stickers</h2>
@@ -160,11 +167,13 @@
     </div>
   </div>
 
-  <div class="send">
-    <button class="btn" id="previewBtn">Preview</button>
-    <button id="send">Send to frame</button>
+  <div class="actions">
+    <div class="send">
+      <button class="btn" id="previewBtn">Preview</button>
+      <button id="send">Send to frame</button>
+    </div>
+    <p id="status" role="status"></p>
   </div>
-  <p id="status" role="status"></p>
 </main>
 
 <script>
@@ -361,52 +370,65 @@ const endPointer = () => {
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', endPointer);
 
+// Selecting text opens its editor under the sheet; selecting a sticker shows its size control
 function select(it) {
+  if (editing && editing !== it) finishText();
   selected = it;
-  $('selPanel').hidden = !it;
-  if (!it) return;
-  $('selEdit').hidden = it.type !== 'text';
-  $('selSize').value = it.size;
+  $('selPanel').hidden = !it || it.type === 'text';
+  if (it && it.type === 'text') openText(it);
+  else if (it) { closePanels(); $('selSize').value = it.size; }
 }
 $('selSize').addEventListener('input', () => { if (selected) { selected.size = +$('selSize').value; redraw(); } });
-$('selDelete').addEventListener('click', () => { items = items.filter(i => i !== selected); select(null); redraw(); });
-$('selEdit').addEventListener('click', () => openText(selected));
+$('selDelete').addEventListener('click', () => removeItem(selected));
+function removeItem(it) {
+  items = items.filter(i => i !== it);
+  if (editing === it) editing = null;
+  selected = null; $('selPanel').hidden = true; $('textPanel').hidden = true;
+  redraw();
+}
 
 // ---------------------------------------------------------------- text
-function openText(existing) {
-  editing = existing || null;
+// Text is edited live: what is typed shows on the sheet straight away
+function openText(t) {
+  editing = t;
   closePanels('textPanel');
   $('textPanel').hidden = false;
-  $('textTitle').textContent = existing ? 'Edit text' : 'Add text';
-  $('textOk').textContent = existing ? 'Update' : 'Add to sheet';
-  $('textInput').value = existing ? existing.text : '';
-  if (existing) { setSeg('font', existing.font); setSeg('tcolor', existing.color); }
-  $('textInput').focus();
+  $('textInput').value = t.text;
+  $('textSize').value = t.size;
+  setSeg('font', t.font); setSeg('tcolor', t.color);
+  $('textPanel').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
-$('textBtn').addEventListener('click', () => $('textPanel').hidden ? openText(null) : closePanels());
-$('textCancel').addEventListener('click', () => closePanels());
+function finishText() {
+  const t = editing;
+  editing = null;
+  $('textPanel').hidden = true;
+  if (t && !t.text.trim()) items = items.filter(i => i !== t);
+  if (selected === t) selected = null;
+  redraw();
+}
+$('textBtn').addEventListener('click', () => {
+  if (editing) { finishText(); return; }
+  setPreview(false);
+  const [W, H] = dims();
+  const t = { type: 'text', text: '', font: opts.font, color: opts.tcolor, size: Math.round(W / 9), x: W / 2, y: H / 2 };
+  items.push(t); select(t);
+  $('textInput').focus();
+});
+$('textInput').addEventListener('input', () => { if (editing) { editing.text = $('textInput').value; redraw(); } });
+$('textSize').addEventListener('input', () => { if (editing) { editing.size = +$('textSize').value; redraw(); } });
+$('textOk').addEventListener('click', finishText);
+$('textDelete').addEventListener('click', () => editing && removeItem(editing));
 $('emojiRow').append(...EMOJI.map(e => {
   const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.setAttribute('aria-label', 'Insert ' + e);
   b.addEventListener('click', () => {
     const t = $('textInput'), a = t.selectionStart ?? t.value.length, z = t.selectionEnd ?? t.value.length;
     t.value = t.value.slice(0, a) + e + t.value.slice(z); t.focus(); t.selectionStart = t.selectionEnd = a + e.length;
+    t.dispatchEvent(new Event('input'));
   });
   return b;
 }));
-$('textOk').addEventListener('click', async () => {
-  const text = $('textInput').value.trim();
-  if (!text) { status('Type something first.'); return; }
-  const f = FONTS[opts.font];
-  await document.fonts.load(`${f.weight} 40px ${f.family}`).catch(() => {});
-  if (editing) {
-    Object.assign(editing, { text, font: opts.font, color: opts.tcolor });
-  } else {
-    const [W, H] = dims();
-    const t = { type: 'text', text, font: opts.font, color: opts.tcolor, size: Math.round(W / 9), x: W / 2, y: H / 2 };
-    items.push(t); select(t);
-  }
-  closePanels(); setPreview(false);
-});
+// Load the text faces up front so the sheet never draws in a fallback font
+Promise.all(Object.values(FONTS).map(f => document.fonts.load(`${f.weight} 40px ${f.family}`).catch(() => {}))).then(() => redraw());
 
 // ---------------------------------------------------------------- stickers
 $('stickerGrid').append(...STICKERS.map(s => {
@@ -417,13 +439,14 @@ $('stickerGrid').append(...STICKERS.map(s => {
     await document.fonts.load('700 40px "Caveat"').catch(() => {});
     const [W, H] = dims();
     const st = { type: 'sticker', kind: s.kind, id: s.id, size: Math.round(W / 4), x: W / 2, y: H / 2 };
-    items.push(st); select(st); closePanels(); setPreview(false);
+    closePanels(); items.push(st); select(st); setPreview(false);
   });
   return b;
 }));
 $('stickerBtn').addEventListener('click', () => { const show = $('stickerPanel').hidden; closePanels(); $('stickerPanel').hidden = !show; });
 
 function closePanels(keep) {
+  if (keep !== 'textPanel' && editing) finishText();
   ['textPanel', 'stickerPanel'].forEach(id => { if (id !== keep) $(id).hidden = true; });
 }
 
@@ -437,6 +460,8 @@ document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e
   const b = e.target.closest('button'); if (!b) return;
   const name = seg.dataset.name, [oldW, oldH] = dims();
   setSeg(name, b.dataset.v);
+  if (editing && name === 'font') editing.font = b.dataset.v;
+  if (editing && name === 'tcolor') editing.color = b.dataset.v;
   if (name === 'orient') {
     // Keep everything roughly in place on the new sheet shape
     const [W, H] = dims(), sx = W / oldW, sy = H / oldH;
@@ -446,13 +471,14 @@ document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e
     });
   }
   if (name === 'tool' && b.dataset.v === 'draw') select(null);
-  if (['look', 'orient', 'tool'].includes(name)) redraw();
+  if (['look', 'orient', 'tool', 'font', 'tcolor'].includes(name)) redraw();
 }));
 ['bright', 'contrast'].forEach(id => $(id).addEventListener('input', () => previewing && redraw()));
 
 $('undo').addEventListener('click', () => {
   const it = items.pop();
-  if (it === selected) select(null);
+  if (it === editing) { editing = null; $('textPanel').hidden = true; }
+  if (it === selected) { selected = null; $('selPanel').hidden = true; }
   setPreview(false);
 });
 $('clear').addEventListener('click', () => {
@@ -599,6 +625,7 @@ function setPreview(on) {
   $('badge').hidden = !on;
   $('previewBtn').textContent = on ? 'Back to editing' : 'Preview';
   redraw();
+  if (on) canvas.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 $('previewBtn').addEventListener('click', () => setPreview(!previewing));
 
