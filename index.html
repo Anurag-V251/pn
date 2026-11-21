@@ -7,31 +7,31 @@
 <title>Paper Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Figtree:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Figtree:wght@400;600;800&family=Playfair+Display:wght@700&display=swap">
 <style>
   /* Layout: one narrow column, the drawing sheet first, tools in thumb reach below it */
   :root {
     --paper: #eceee9; --sheet: #fbfbf8; --ink: #17191c; --muted: #5f6670; --line: #cdd1ca;
-    --accent: #b8335f; --accent-ink: #ffffff;
+    --accent: #b8335f; --accent-ink: #ffffff; --panel: #f6f7f4;
     --hand: "Caveat", "Segoe Print", cursive;
     --body: "Figtree", system-ui, -apple-system, sans-serif;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root { --paper: #15171a; --sheet: #fbfbf8; --ink: #e9ebe7; --muted: #9aa1a9; --line: #33373c;
-            --accent: #e0668f; --accent-ink: #15171a; color-scheme: dark; }
+            --accent: #e0668f; --accent-ink: #15171a; --panel: #1d2024; color-scheme: dark; }
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body { background: var(--paper); color: var(--ink); font: 16px/1.45 var(--body); }
-  main { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px;
+  main { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;
          padding-block: max(18px, env(safe-area-inset-top, 0px)) max(32px, env(safe-area-inset-bottom, 0px));
          padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
   h1 { font: 600 44px/1 var(--hand); margin: 0; letter-spacing: .5px; }
   header p { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
   .notice { border: 1px solid var(--accent); color: var(--ink); padding: 12px 14px; border-radius: 10px; }
   .stage { position: relative; display: flex; justify-content: center; }
-  canvas { display: block; max-width: 100%; max-height: 62vh; background: var(--sheet); border-radius: 4px;
+  canvas { display: block; max-width: 100%; max-height: 58vh; background: var(--sheet); border-radius: 4px;
            box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 8px 24px rgba(0,0,0,.10); touch-action: none; }
   canvas.preview { image-rendering: pixelated; }
   .badge { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-size: 12px; letter-spacing: .06em;
@@ -42,27 +42,38 @@
   .seg button.on { background: var(--ink); color: var(--paper); }
   .btn { border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 15px;
          padding: 9px 12px; border-radius: 10px; cursor: pointer; }
+  .btn.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   .btn.warn { border-color: var(--accent); color: var(--accent); }
   .spacer { flex: 1; }
   input[type=file] { display: none; }
-  details { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-  summary { cursor: pointer; font-weight: 600; }
-  .row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .panel { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--panel); display: flex; flex-direction: column; gap: 10px; }
+  .panel h2 { margin: 0; font-size: 15px; font-weight: 600; }
+  textarea { width: 100%; min-height: 70px; resize: vertical; font: 18px/1.35 var(--body); color: var(--ink); background: var(--paper);
+             border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  .emojis, .stickers { display: grid; gap: 6px; }
+  .emojis { grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); }
+  .stickers { grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); }
+  .emojis button, .stickers button { border: 1px solid var(--line); background: var(--paper); border-radius: 10px; font-size: 24px; line-height: 1;
+                                     padding: 8px 0; color: var(--ink); cursor: pointer; }
+  .stickers button { font-size: 32px; padding: 10px 0; }
+  .stickers button.drawn { font: 600 15px/1.1 var(--hand); font-size: 20px; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .row > span { width: 88px; color: var(--muted); font-size: 14px; }
   .row input[type=range] { flex: 1; min-width: 0; }
+  .hint { margin: 0; color: var(--muted); font-size: 13px; }
   .send { display: flex; gap: 8px; }
   .send .btn { flex: 1; }
   #send { flex: 2; border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 14px; }
   #send:disabled { opacity: .45; }
   #status { margin: 0; min-height: 1.4em; text-align: center; color: var(--muted); font-size: 15px; }
-  button:focus-visible, .btn:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:focus-visible, .btn:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
 <body>
 <main>
   <header>
     <h1>Paper Notes</h1>
-    <p>Draw something or add a photo, then send it. It appears on the e-paper frame within a minute. Pictures are encrypted on this phone; only the frame can open them.</p>
+    <p>Draw, write, add stickers or a photo, then send it. It appears on the e-paper frame within a minute. Pictures are encrypted on this phone; only the frame can open them.</p>
   </header>
 
   <div class="notice" id="missing" hidden>This link is missing its secret code, so nothing can be sent. Ask for the full link again.</div>
@@ -73,29 +84,63 @@
   </div>
 
   <div class="tools">
-    <div class="seg" data-name="color" role="group" aria-label="Pen colour">
+    <div class="seg" data-name="tool" role="group" aria-label="Tool">
+      <button data-v="draw" class="on">Draw</button><button data-v="move">Move</button>
+    </div>
+    <div class="seg" data-name="color" role="group" aria-label="Colour">
       <button data-v="#000" class="on">Black</button><button data-v="#fff">White</button>
     </div>
     <div class="seg" data-name="size" role="group" aria-label="Pen size">
       <button data-v="4">S</button><button data-v="9" class="on">M</button><button data-v="18">L</button>
     </div>
+  </div>
+
+  <div class="tools">
+    <button class="btn" id="textBtn">Text</button>
+    <button class="btn" id="stickerBtn">Stickers</button>
+    <label class="btn" for="photo" id="photoLabel">Photo or GIF</label>
+    <input type="file" id="photo" accept="image/*">
     <span class="spacer"></span>
     <button class="btn" id="undo">Undo</button>
     <button class="btn" id="clear">Clear</button>
   </div>
 
-  <div class="tools">
-    <label class="btn" for="photo" id="photoLabel">Add photo</label>
-    <input type="file" id="photo" accept="image/*">
-    <button class="btn" id="removePhoto" hidden>Remove photo</button>
-    <span class="spacer"></span>
-    <div class="seg" data-name="orient" role="group" aria-label="Orientation">
-      <button data-v="portrait" class="on">Tall</button><button data-v="landscape">Wide</button>
+  <section class="panel" id="selPanel" hidden>
+    <div class="row"><span>Selected</span>
+      <input type="range" id="selSize" min="20" max="400" value="100" aria-label="Size">
+      <button class="btn" id="selEdit" hidden>Edit text</button>
+      <button class="btn warn" id="selDelete">Delete</button>
     </div>
-  </div>
+    <p class="hint">Drag it on the sheet to move it. The slider changes its size.</p>
+  </section>
 
-  <details id="photoOpts" hidden>
-    <summary>Photo look</summary>
+  <section class="panel" id="textPanel" hidden>
+    <h2 id="textTitle">Add text</h2>
+    <textarea id="textInput" placeholder="Type a message. Emoji from your keyboard work too." maxlength="200"></textarea>
+    <div class="emojis" id="emojiRow" aria-label="Quick emoji"></div>
+    <div class="row"><span>Style</span>
+      <div class="seg" data-name="font" role="group" aria-label="Text style">
+        <button data-v="hand" class="on">Hand</button><button data-v="bold">Bold</button><button data-v="classic">Classic</button>
+      </div>
+    </div>
+    <div class="row"><span>Colour</span>
+      <div class="seg" data-name="tcolor" role="group" aria-label="Text colour">
+        <button data-v="#000" class="on">Black</button><button data-v="#fff">White</button>
+      </div>
+    </div>
+    <div class="tools"><span class="spacer"></span>
+      <button class="btn" id="textCancel">Cancel</button>
+      <button class="btn on" id="textOk">Add to sheet</button>
+    </div>
+  </section>
+
+  <section class="panel" id="stickerPanel" hidden>
+    <h2>Stickers</h2>
+    <div class="stickers" id="stickerGrid"></div>
+    <p class="hint">Tap one to place it, then drag it where you want.</p>
+  </section>
+
+  <section class="panel" id="photoPanel" hidden>
     <div class="row"><span>Style</span>
       <div class="seg" data-name="look" role="group" aria-label="Photo style">
         <button data-v="crisp" class="on">Crisp</button><button data-v="smooth">Smooth</button><button data-v="gray">Gray</button>
@@ -103,7 +148,17 @@
     </div>
     <div class="row"><span>Brightness</span><input type="range" id="bright" min="-80" max="80" value="0"></div>
     <div class="row"><span>Contrast</span><input type="range" id="contrast" min="-80" max="80" value="5"></div>
-  </details>
+    <div class="row" id="gifRow" hidden><span>GIF frame</span><input type="range" id="gifFrame" min="0" max="0" value="0"></div>
+    <p class="hint" id="gifHint" hidden>The frame can't play animations, so pick the moment you like.</p>
+    <div class="tools"><span class="spacer"></span><button class="btn warn" id="removePhoto">Remove photo</button></div>
+  </section>
+
+  <div class="tools">
+    <span class="hint">Sheet</span>
+    <div class="seg" data-name="orient" role="group" aria-label="Orientation">
+      <button data-v="portrait" class="on">Tall</button><button data-v="landscape">Wide</button>
+    </div>
+  </div>
 
   <div class="send">
     <button class="btn" id="previewBtn">Preview</button>
@@ -120,13 +175,28 @@ const LOOKS = {
   smooth: { levels: [0, 255], codes: [0, 3], dither: 'floyd' },
   gray:   { levels: [0, 85, 170, 255], codes: [0, 1, 2, 3], dither: 'floyd' },
 };
+const FONTS = {
+  hand:    { family: '"Caveat", cursive', weight: 700, scale: 1.25 },
+  bold:    { family: '"Figtree", sans-serif', weight: 800, scale: 1 },
+  classic: { family: '"Playfair Display", serif', weight: 700, scale: 1 },
+};
+const EMOJI = ['❤️', '😘', '🥰', '😍', '😂', '🥺', '😴', '🌹', '✨', '🌙', '☀️', '🎉', '🐱', '🐶', '🍕', '☕'];
+const STICKERS = [
+  { kind: 'drawn', id: 'heart', label: '♥' }, { kind: 'drawn', id: 'loveyou', label: 'Love you' },
+  { kind: 'drawn', id: 'missyou', label: 'Miss you' }, { kind: 'drawn', id: 'stamp', label: 'XOXO' },
+  ...['❤️', '💕', '💋', '🌹', '😘', '🥰', '🤗', '😴', '🌙', '⭐', '🎂', '🎁', '🐻', '🐱', '🦋', '🌸', '☕', '🍰', '🏠', '✈️']
+    .map(e => ({ kind: 'emoji', id: e, label: e })),
+];
+
 // The link carries only the AES-256 key (never sent to this site). The relay mailbox is derived from it.
 const keyText = decodeURIComponent(location.hash.slice(1)).trim();
 let aesKey = null, topic = '';
 const $ = id => document.getElementById(id);
 const canvas = $('board'), ctx = canvas.getContext('2d', { willReadFrequently: true });
-const opts = { color: '#000', size: '9', orient: 'portrait', look: 'crisp' };
-let photo = null, strokes = [], current = null, previewing = false, clearArmed = null;
+const opts = { tool: 'draw', color: '#000', size: '9', orient: 'portrait', look: 'crisp', font: 'hand', tcolor: '#000' };
+// Everything on the sheet, bottom to top: strokes, texts and stickers
+let photo = null, items = [], current = null, previewing = false, clearArmed = null;
+let selected = null, drag = null, editing = null, gif = null;
 
 function keyBytes(t) {
   if (!/^[\w-]{43}$/.test(t)) return null;
@@ -157,7 +227,7 @@ async function seal(frame) {
 
 function dims() { return opts.orient === 'portrait' ? [NATIVE_H, NATIVE_W] : [NATIVE_W, NATIVE_H]; }
 
-// ---------------------------------------------------------------- drawing
+// ---------------------------------------------------------------- drawing items
 function drawStroke(c, s) {
   c.strokeStyle = s.color; c.fillStyle = s.color; c.lineWidth = s.size; c.lineCap = 'round'; c.lineJoin = 'round';
   const p = s.points;
@@ -170,9 +240,69 @@ function drawStroke(c, s) {
   c.lineTo(p[p.length - 1][0], p[p.length - 1][1]); c.stroke();
 }
 
+// Text and stickers are centred on (x, y); each draw records its box for tapping
+function drawText(c, t) {
+  const f = FONTS[t.font], px = t.size * f.scale, lines = t.text.split('\n');
+  c.font = `${f.weight} ${px}px ${f.family}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  const lh = px * 1.15, top = t.y - (lines.length - 1) * lh / 2;
+  let w = 0;
+  lines.forEach((line, i) => {
+    w = Math.max(w, c.measureText(line).width);
+    const y = top + i * lh;
+    // A halo in the opposite colour keeps words readable over a photo
+    if (photo) { c.lineJoin = 'round'; c.lineWidth = Math.max(3, px / 7); c.strokeStyle = t.color === '#000' ? '#fff' : '#000'; c.strokeText(line, t.x, y); }
+    c.fillStyle = t.color; c.fillText(line, t.x, y);
+  });
+  t.box = [t.x - w / 2, t.y - lines.length * lh / 2, w, lines.length * lh];
+}
+
+function drawSticker(c, s) {
+  const z = s.size;
+  c.save(); c.translate(s.x, s.y);
+  if (s.kind === 'emoji') {
+    c.font = `${z}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(s.id, 0, z * 0.05);
+    s.box = [s.x - z * 0.6, s.y - z * 0.6, z * 1.2, z * 1.2];
+  } else if (s.id === 'heart') {
+    c.fillStyle = '#000'; c.beginPath();
+    c.moveTo(0, z * 0.35);
+    c.bezierCurveTo(-z * 0.6, -z * 0.05, -z * 0.35, -z * 0.55, 0, -z * 0.25);
+    c.bezierCurveTo(z * 0.35, -z * 0.55, z * 0.6, -z * 0.05, 0, z * 0.35);
+    c.fill();
+    s.box = [s.x - z * 0.5, s.y - z * 0.45, z, z * 0.85];
+  } else if (s.id === 'loveyou' || s.id === 'stamp') {
+    const text = s.id === 'loveyou' ? 'Love you' : 'XOXO', w = z * 1.9, h = z * 0.62;
+    c.fillStyle = '#000'; roundRect(c, -w / 2, -h / 2, w, h, h / 2); c.fill();
+    c.fillStyle = '#fff'; c.font = `700 ${h * 0.72}px "Caveat", cursive`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(text, 0, h * 0.04);
+    s.box = [s.x - w / 2, s.y - h / 2, w, h];
+  } else if (s.id === 'missyou') {
+    const w = z * 1.8, h = z * 0.8;
+    c.fillStyle = '#fff'; c.strokeStyle = '#000'; c.lineWidth = Math.max(3, z / 22);
+    roundRect(c, -w / 2, -h / 2, w, h, h * 0.35);
+    c.moveTo(-w * 0.2, h / 2); c.lineTo(-w * 0.32, h * 0.85); c.lineTo(-w * 0.02, h / 2);
+    c.fill(); c.stroke();
+    c.fillStyle = '#000'; c.font = `700 ${h * 0.55}px "Caveat", cursive`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('Miss you', 0, h * 0.02);
+    s.box = [s.x - w / 2, s.y - h / 2, w, h * 1.35];
+  }
+  c.restore();
+}
+
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+
+function drawItem(c, it) {
+  if (it.type === 'stroke') drawStroke(c, it);
+  else if (it.type === 'text') drawText(c, it);
+  else drawSticker(c, it);
+}
+
 function drawPhoto(c, W, H) {
   if (!photo) return;
-  const iw = photo.naturalWidth, ih = photo.naturalHeight, s = Math.max(W / iw, H / ih);
+  const iw = photo.naturalWidth || photo.width, ih = photo.naturalHeight || photo.height, s = Math.max(W / iw, H / ih);
   c.drawImage(photo, (W - iw * s) / 2, (H - ih * s) / 2, iw * s, ih * s);
 }
 
@@ -183,29 +313,148 @@ function redraw() {
   canvas.classList.remove('preview');
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
   drawPhoto(ctx, W, H);
-  strokes.forEach(s => drawStroke(ctx, s));
+  items.forEach(it => drawItem(ctx, it));
   if (current) drawStroke(ctx, current);
+  if (selected && selected.box) {
+    const [x, y, w, h] = selected.box, pad = 6;
+    ctx.save(); ctx.setLineDash([10, 6]); ctx.lineWidth = 3; ctx.strokeStyle = '#b8335f';
+    ctx.strokeRect(x - pad, y - pad, w + pad * 2, h + pad * 2); ctx.restore();
+  }
 }
 
+// ---------------------------------------------------------------- pointer: draw or move
 function pos(e) {
   const r = canvas.getBoundingClientRect();
   return [(e.clientX - r.left) * canvas.width / r.width, (e.clientY - r.top) * canvas.height / r.height];
 }
+function hit([x, y]) {
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (it.type === 'stroke' || !it.box) continue;
+    const [bx, by, bw, bh] = it.box;
+    if (x >= bx - 12 && x <= bx + bw + 12 && y >= by - 12 && y <= by + bh + 12) return it;
+  }
+  return null;
+}
 canvas.addEventListener('pointerdown', e => {
   if (previewing) setPreview(false);
   canvas.setPointerCapture(e.pointerId);
-  current = { color: opts.color, size: +opts.size * (canvas.width / 480), points: [pos(e)] };
+  const p = pos(e), target = hit(p);
+  if (opts.tool === 'move' || target) {
+    select(target);
+    if (target) drag = { dx: target.x - p[0], dy: target.y - p[1] };
+    redraw();
+    return;
+  }
+  select(null);
+  current = { type: 'stroke', color: opts.color, size: +opts.size * (canvas.width / 480), points: [p] };
   redraw();
 });
 canvas.addEventListener('pointermove', e => {
-  if (!current) return;
-  current.points.push(pos(e)); redraw();
+  if (drag && selected) { const p = pos(e); selected.x = p[0] + drag.dx; selected.y = p[1] + drag.dy; redraw(); return; }
+  if (current) { current.points.push(pos(e)); redraw(); }
 });
-const endStroke = () => { if (current) { strokes.push(current); current = null; redraw(); } };
-canvas.addEventListener('pointerup', endStroke);
-canvas.addEventListener('pointercancel', endStroke);
+const endPointer = () => {
+  drag = null;
+  if (current) { items.push(current); current = null; redraw(); }
+};
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
 
-$('undo').addEventListener('click', () => { strokes.pop(); setPreview(false); });
+function select(it) {
+  selected = it;
+  $('selPanel').hidden = !it;
+  if (!it) return;
+  $('selEdit').hidden = it.type !== 'text';
+  $('selSize').value = it.size;
+}
+$('selSize').addEventListener('input', () => { if (selected) { selected.size = +$('selSize').value; redraw(); } });
+$('selDelete').addEventListener('click', () => { items = items.filter(i => i !== selected); select(null); redraw(); });
+$('selEdit').addEventListener('click', () => openText(selected));
+
+// ---------------------------------------------------------------- text
+function openText(existing) {
+  editing = existing || null;
+  closePanels('textPanel');
+  $('textPanel').hidden = false;
+  $('textTitle').textContent = existing ? 'Edit text' : 'Add text';
+  $('textOk').textContent = existing ? 'Update' : 'Add to sheet';
+  $('textInput').value = existing ? existing.text : '';
+  if (existing) { setSeg('font', existing.font); setSeg('tcolor', existing.color); }
+  $('textInput').focus();
+}
+$('textBtn').addEventListener('click', () => $('textPanel').hidden ? openText(null) : closePanels());
+$('textCancel').addEventListener('click', () => closePanels());
+$('emojiRow').append(...EMOJI.map(e => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.setAttribute('aria-label', 'Insert ' + e);
+  b.addEventListener('click', () => {
+    const t = $('textInput'), a = t.selectionStart ?? t.value.length, z = t.selectionEnd ?? t.value.length;
+    t.value = t.value.slice(0, a) + e + t.value.slice(z); t.focus(); t.selectionStart = t.selectionEnd = a + e.length;
+  });
+  return b;
+}));
+$('textOk').addEventListener('click', async () => {
+  const text = $('textInput').value.trim();
+  if (!text) { status('Type something first.'); return; }
+  const f = FONTS[opts.font];
+  await document.fonts.load(`${f.weight} 40px ${f.family}`).catch(() => {});
+  if (editing) {
+    Object.assign(editing, { text, font: opts.font, color: opts.tcolor });
+  } else {
+    const [W, H] = dims();
+    const t = { type: 'text', text, font: opts.font, color: opts.tcolor, size: Math.round(W / 9), x: W / 2, y: H / 2 };
+    items.push(t); select(t);
+  }
+  closePanels(); setPreview(false);
+});
+
+// ---------------------------------------------------------------- stickers
+$('stickerGrid').append(...STICKERS.map(s => {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = s.label;
+  b.setAttribute('aria-label', 'Sticker ' + (s.kind === 'emoji' ? s.label : s.label.replace('♥', 'heart')));
+  if (s.kind === 'drawn') b.classList.add('drawn');
+  b.addEventListener('click', async () => {
+    await document.fonts.load('700 40px "Caveat"').catch(() => {});
+    const [W, H] = dims();
+    const st = { type: 'sticker', kind: s.kind, id: s.id, size: Math.round(W / 4), x: W / 2, y: H / 2 };
+    items.push(st); select(st); closePanels(); setPreview(false);
+  });
+  return b;
+}));
+$('stickerBtn').addEventListener('click', () => { const show = $('stickerPanel').hidden; closePanels(); $('stickerPanel').hidden = !show; });
+
+function closePanels(keep) {
+  ['textPanel', 'stickerPanel'].forEach(id => { if (id !== keep) $(id).hidden = true; });
+}
+
+// ---------------------------------------------------------------- tool rows
+function setSeg(name, v) {
+  const seg = document.querySelector(`.seg[data-name=${name}]`);
+  seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === v));
+  opts[name] = v;
+}
+document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const name = seg.dataset.name, [oldW, oldH] = dims();
+  setSeg(name, b.dataset.v);
+  if (name === 'orient') {
+    // Keep everything roughly in place on the new sheet shape
+    const [W, H] = dims(), sx = W / oldW, sy = H / oldH;
+    items.forEach(it => {
+      if (it.type === 'stroke') it.points = it.points.map(([x, y]) => [x * sx, y * sy]);
+      else { it.x *= sx; it.y *= sy; }
+    });
+  }
+  if (name === 'tool' && b.dataset.v === 'draw') select(null);
+  if (['look', 'orient', 'tool'].includes(name)) redraw();
+}));
+['bright', 'contrast'].forEach(id => $(id).addEventListener('input', () => previewing && redraw()));
+
+$('undo').addEventListener('click', () => {
+  const it = items.pop();
+  if (it === selected) select(null);
+  setPreview(false);
+});
 $('clear').addEventListener('click', () => {
   // Two taps: the first arms it, so a stray tap never wipes a drawing
   if (!clearArmed) {
@@ -213,45 +462,54 @@ $('clear').addEventListener('click', () => {
     clearArmed = setTimeout(disarmClear, 3000);
     return;
   }
-  disarmClear(); strokes = []; photo = null; syncPhotoUi(); setPreview(false);
+  disarmClear(); items = []; select(null); setPhoto(null); setPreview(false);
 });
 function disarmClear() { clearTimeout(clearArmed); clearArmed = null; $('clear').textContent = 'Clear'; $('clear').classList.remove('warn'); }
 
-document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-  const name = seg.dataset.name, [oldW, oldH] = dims();
-  opts[name] = b.dataset.v;
-  if (name === 'orient') {
-    // Keep the drawing roughly in place on the new sheet shape
-    const [W, H] = dims();
-    strokes.forEach(s => s.points = s.points.map(([x, y]) => [x * W / oldW, y * H / oldH]));
-  }
-  if (name === 'look' || name === 'orient') redraw();
-}));
-['bright', 'contrast'].forEach(id => $(id).addEventListener('input', () => previewing && redraw()));
-
-$('photo').addEventListener('change', () => {
+// ---------------------------------------------------------------- photo and GIF
+$('photo').addEventListener('change', async () => {
   const f = $('photo').files[0]; if (!f) return;
+  $('photo').value = '';
+  if (gif) { gif.dec.close(); gif = null; }
+  if (f.type === 'image/gif' && 'ImageDecoder' in window) {
+    try {
+      const dec = new ImageDecoder({ data: await f.arrayBuffer(), type: f.type });
+      await dec.tracks.ready;
+      const n = dec.tracks.selectedTrack.frameCount;
+      gif = { dec, n };
+      $('gifFrame').max = Math.max(0, n - 1); $('gifFrame').value = 0;
+      await showGifFrame(0);
+      return;
+    } catch (e) { gif = null; /* fall back to the first frame below */ }
+  }
   const im = new Image();
-  im.onload = () => {
-    photo = im;
-    if (!strokes.length) {
-      // Match the sheet to the photo's shape when nothing has been drawn yet
-      const want = im.naturalWidth > im.naturalHeight ? 'landscape' : 'portrait';
-      document.querySelector(`.seg[data-name=orient] button[data-v=${want}]`).click();
-    }
-    syncPhotoUi(); redraw();
-  };
+  im.onload = () => setPhoto(im);
   im.onerror = () => status('That file could not be opened as a picture.');
   im.src = URL.createObjectURL(f);
-  $('photo').value = '';
 });
-$('removePhoto').addEventListener('click', () => { photo = null; syncPhotoUi(); redraw(); });
-function syncPhotoUi() {
-  $('removePhoto').hidden = !photo; $('photoOpts').hidden = !photo;
-  $('photoLabel').textContent = photo ? 'Change photo' : 'Add photo';
+async function showGifFrame(i) {
+  const { image } = await gif.dec.decode({ frameIndex: i });
+  const c = document.createElement('canvas'); c.width = image.displayWidth; c.height = image.displayHeight;
+  c.getContext('2d').drawImage(image, 0, 0); image.close();
+  setPhoto(c, true);
 }
+$('gifFrame').addEventListener('input', () => gif && showGifFrame(+$('gifFrame').value));
+function setPhoto(p, isGif) {
+  const first = !photo;
+  photo = p;
+  if (!isGif && gif) { gif.dec.close(); gif = null; }
+  if (!p && gif) { gif.dec.close(); gif = null; }
+  $('gifRow').hidden = $('gifHint').hidden = !(gif && gif.n > 1);
+  $('photoPanel').hidden = !p;
+  $('photoLabel').textContent = p ? 'Change photo' : 'Photo or GIF';
+  if (p && first && !items.length) {
+    // Match the sheet to the photo's shape when nothing else is on it yet
+    const w = p.naturalWidth || p.width, h = p.naturalHeight || p.height;
+    setSeg('orient', w > h ? 'landscape' : 'portrait');
+  }
+  redraw();
+}
+$('removePhoto').addEventListener('click', () => setPhoto(null));
 
 // ---------------------------------------------------------------- e-paper conversion
 function adjust(g, W, H) {
@@ -304,7 +562,7 @@ function quantize(g, W, H, look) {
   return q;
 }
 
-// Returns device codes per pixel for the sheet: the photo is toned and dithered, ink stays solid
+// Returns device codes per pixel: the photo is toned and dithered, ink and stickers sit on top
 function render() {
   const [W, H] = dims(), n = W * H;
   const work = document.createElement('canvas'); work.width = W; work.height = H;
@@ -316,11 +574,15 @@ function render() {
   if (photo) adjust(g, W, H);
 
   wc.clearRect(0, 0, W, H);
-  strokes.forEach(s => drawStroke(wc, s));
+  items.forEach(it => drawItem(wc, it));
   const sd = wc.getImageData(0, 0, W, H).data;
   for (let i = 0; i < n; i++) {
     const a = sd[i * 4 + 3] / 255;
-    if (a > 0) g[i] = g[i] * (1 - a) + sd[i * 4] * a;
+    if (a === 0) continue;
+    let l = 0.299 * sd[i * 4] + 0.587 * sd[i * 4 + 1] + 0.114 * sd[i * 4 + 2];
+    // Colour emoji are mostly light tones; deepen them so they keep their shape in black and white
+    if (l > 0 && l < 255) l = 255 * Math.pow(l / 255, 1.6);
+    g[i] = g[i] * (1 - a) + l * a;
   }
   return quantize(g, W, H, LOOKS[photo ? opts.look : 'crisp']);
 }
@@ -335,7 +597,7 @@ function showPreview() {
 function setPreview(on) {
   previewing = on;
   $('badge').hidden = !on;
-  $('previewBtn').textContent = on ? 'Back to drawing' : 'Preview';
+  $('previewBtn').textContent = on ? 'Back to editing' : 'Preview';
   redraw();
 }
 $('previewBtn').addEventListener('click', () => setPreview(!previewing));
@@ -353,7 +615,7 @@ function pack(q) {
 function status(t) { $('status').textContent = t; }
 
 $('send').addEventListener('click', async () => {
-  if (!strokes.length && !photo) { status('Draw something or add a photo first.'); return; }
+  if (!items.length && !photo) { status('Draw, write or add something first.'); return; }
   if (!aesKey) { status('This link is missing its secret code, so nothing can be sent.'); return; }
   $('send').disabled = true; status('Sending...');
   try {
